@@ -17,90 +17,75 @@
 # ##### END GPL LICENSE BLOCK #####
 
 import bpy
-from time import time
 import os
-import json
 
-def clip(val,minVal=0.0, maxVal=1.0):
-    """clip(val, minVal=0.0, maxVal=1.0
-    Clips 'val' between minVal and maxVal"""
+def clipper(val,minVal=0.0, maxVal=1.0):
+    """clipper(val, minVal=0.0, maxVal=1.0
+       Clips 'val' between minVal and maxVal.
+    """
     return min(maxVal, max(minVal, val))
 
 def ranger(val, minVal=0.0, maxVal=1.0):
     """ranger(val, minVal=0.0, maxVal=1.0)
-    Shifts and scales val such that any number
-    between minVal and maxVal will be between 0.0
-    and 1.0 respectively.  Does not clip.
-    
-    eg: ranger(val=-1.0, minVal=0.5, maxVal=2.5)
-    returns: (-1.0 - 0.5) / (2.5-0.5) = -0.75
+       Shifts and scales val such that any number between minVal and maxVal
+       will be between 0.0 and 1.0 respectively.  Does not clip.
 
-    eg2: ranger(val=100, minVal=50, maxVal=250):
-    returns: (100 - 50) / (250-50) = 0.25
+       Uses the equation: (val - minVal) / (maxVal - minVal)
     """
     return (val-minVal)/(maxVal-minVal)
 
 def rangeSet(val, minVal=0.0, maxVal=1.0):
     """rangeSet(val, minVal=0.0, maxVal=1.0)
-    Scales val using ranger with minVal and maxVal as
-    inputs, then clips all values below 0.0 or above 1.0
-    using clip."""
+       Scales val using ranger with minVal and maxVal as inputs, then
+       clips all values below 0.0 or above 1.0 using clip.
+    """
     ranged=ranger(val, minVal, maxVal)
-    return clip(ranged)
-
-beginTime=time()
+    return clipper(ranged)
 
 class PointCloudClass():
-    def __init__(self,setup,mesh):
-        self.fname=setup['fname']
-        self.x=setup['x']
-        self.y=setup['y']
-        self.z=setup['z']
-        self.Col1=setup['Col']
-        self.Col2=setup['Col2']
-        
-        self.mesh=mesh
-        
-        
-    def loadItter(self,n):
+    def __init__(self,fname):
+        self.fname=fname
+        self.header=[]
+        self.points=[]
+
+    def loadFile(self):
+        """loadFile()
+           This is very dumb at the moment.  It simply reads the
+           file from disk assuming its a proper .csv file and stores
+           it internally without error checking.
+        """
+
+        fid=open(self.fname,'r')
+        self.header=fid.readline().split(',')
+
+        for line in self.lines:
+            self.points.append(line.split(','))
+
+        fid.close()
+
+    def createMesh(self):
+        """createMesh()
+           For now, assumes a proper set of points has been loaded
+           and generates the mesh from the first three columns.
+        """
+        mesh=bpy.data.meshes.new('PointCloud')
+        for p in self.points
+
+    def destroyMesh(self,n):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='TOGGLE')
         bpy.ops.mesh.delete(type='VERT')
         bpy.ops.object.mode_set()
 
-    
-
-if os.path.isfile('/User/djortley/Desktop/df/setup.json'):
-    fid=open('/Users/djortley/Desktop/df/setup.json','r')
-    setup=json.load(fid)
-    fid.close()
-
-    mesh=bpy.data.meshes.new('PointCloud')
-    object=bpy.data.objects.new('PointCloud',mesh)
-    
-    
-
-    
 
 
-tmp=fid.readline()
+mesh=bpy.data.meshes.new('PointCloud')
+object=bpy.data.objects.new('PointCloud',mesh)
+
 
 pt=[]
 nVal=[]
 colDict={}
-
-lines=fid.readlines()
-fid.close()
-lines=[v.strip().split(',') for v in lines]
-
-for xx,yy,zz,nn in lines:
-    pt.append((float(xx),float(yy),float(zz)))
-    nVal.append(rangeSet(float(nn),0.0, 4.0))
-
-#bpy.ops.object.mode_set(mode='EDIT')
-#bpy.ops.mesh.select_all(action='TOGGLE')
-#bpy.ops.mesh.delete(type='VERT')
-#bpy.ops.object.mode_set()
 
 scene=bpy.context.scene
 sceneLinked=scene.objects.link(object)
@@ -124,13 +109,27 @@ for p,n in zip(pt,nVal):
         mesh.vertex_colors['Col'].data[i].color[2]=nn
         
     oldLen=newLen
-    #tmp=[m.index for m in mesh.polygons if m.select]
-    #for t in tmp: colDict[t]=n
 
-vertlist=bpy.context.active_object.data.vertices
-polylist=bpy.context.active_object.data.polygons
-colorlist=bpy.context.active_object.data.vertex_colors[0].data
+def readMesh(filename, objName):
+    pass
 
-scene.update()
-endTime=time()
-print(endTime-beginTime)
+def addMeshObject(mesh, objName):
+    scene = bpy.context.scene
+    for object in scene.objects:
+        object.select = False
+
+    mesh.update()
+    mesh.validate()
+
+    nobj = bpy.data.objects.new(objName, mesh)
+    scene.objects.link(nobj)
+    nobj.select = True
+
+    if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
+        scene.objects.active = nobj
+
+
+def read(filepath):
+    objName = bpy.path.display_name_from_filepath(filepath)
+    mesh = readMesh(filepath, objName)
+    addMeshObj(mesh, objName)
