@@ -42,18 +42,24 @@ def rangeSet(val, minVal=0.0, maxVal=1.0):
     ranged=ranger(val, minVal, maxVal)
     return clipper(ranged)
 
-class PointCloudClass():
+class PointCloud():
     def __init__(self,fname):
         self.fname=fname
         self.header=[]
         self.points=[]
 
-    def loadFile(self):
-        """loadFile()
+    def loadPoints(self,fname=None):
+        """loadPoints(fname=None)
            This is very dumb at the moment.  It simply reads the
            file from disk assuming its a proper .csv file and stores
            it internally without error checking.
+
+           If fname is None and self.fname is none, returns False
+           If fname is set, then assigns new filename to self.fname
         """
+
+        if fname: self.fname=fname
+        if not self.fname: return False
 
         fid=open(self.fname,'r')
         self.header=fid.readline().split(',')
@@ -63,13 +69,54 @@ class PointCloudClass():
 
         fid.close()
 
-    def createMesh(self):
+    def createMesh(self,objName):
         """createMesh()
            For now, assumes a proper set of points has been loaded
            and generates the mesh from the first three columns.
         """
-        mesh=bpy.data.meshes.new('PointCloud')
-        for p in self.points
+
+        scene = bpy.context.scene
+        for object in scene.objects:
+            object.select = False
+
+        mesh.update()
+        mesh.validate()
+
+        mesh=bpy.data.meshes.new(objName)
+        object = bpy.data.objects.new(objName, mesh)
+        scene.objects.link(object)
+        object.select = True
+
+        if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
+            scene.objects.active = object
+
+        Col=mesh.vertex_colors.new()
+
+        oldLen=0
+        for p in self.points:
+            x=p(0)
+            y=p(1)
+            z=p(2)
+            n=p(3)  # for now, column 'n' is 'Col'.  This will change in the future
+
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=p)
+            #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=p)
+            #bpy.ops.mesh.primitive_cube_add(location=p,radius=0.07)
+            bpy.ops.object.mode_set()
+            nn = rangeSet(n, 0.0, 1.0)
+            newLen=len(Col.data)
+            print(oldLen,newLen)
+            for i in range(oldLen,newLen):
+                mesh.vertex_colors['Col'].data[i].color[0]=nn
+                mesh.vertex_colors['Col'].data[i].color[1]=nn
+                mesh.vertex_colors['Col'].data[i].color[2]=nn
+        
+            oldLen=newLen
+
+
+        return (object,mesh)
+            
 
     def destroyMesh(self,n):
         bpy.ops.object.mode_set(mode='EDIT')
@@ -79,57 +126,10 @@ class PointCloudClass():
 
 
 
-mesh=bpy.data.meshes.new('PointCloud')
-object=bpy.data.objects.new('PointCloud',mesh)
-
-
-pt=[]
-nVal=[]
-colDict={}
-
-scene=bpy.context.scene
-sceneLinked=scene.objects.link(object)
-scene.objects.active=object
-object.select=True
-
-Col=mesh.vertex_colors.new()
-oldLen=0
-for p,n in zip(pt,nVal):
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=p)
-    #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=p)
-    #bpy.ops.mesh.primitive_cube_add(location=p,radius=0.07)
-    bpy.ops.object.mode_set()
-    nn = rangeSet(n, 0.0, 1.0)
-    newLen=len(Col.data)
-    print(oldLen,newLen)
-    for i in range(oldLen,newLen):
-        mesh.vertex_colors['Col'].data[i].color[0]=nn
-        mesh.vertex_colors['Col'].data[i].color[1]=nn
-        mesh.vertex_colors['Col'].data[i].color[2]=nn
-        
-    oldLen=newLen
-
-def readMesh(filename, objName):
-    pass
-
-def addMeshObject(mesh, objName):
-    scene = bpy.context.scene
-    for object in scene.objects:
-        object.select = False
-
-    mesh.update()
-    mesh.validate()
-
-    nobj = bpy.data.objects.new(objName, mesh)
-    scene.objects.link(nobj)
-    nobj.select = True
-
-    if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
-        scene.objects.active = nobj
 
 
 def read(filepath):
     objName = bpy.path.display_name_from_filepath(filepath)
-    mesh = readMesh(filepath, objName)
-    addMeshObj(mesh, objName)
+    pc=PointCloud(filename)
+    pc.loadPoints()  # TODO: Add some error checking
+    object,mesh=pc.createMesh(objName)

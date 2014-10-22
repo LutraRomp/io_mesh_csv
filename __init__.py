@@ -24,14 +24,14 @@ bl_info = {
   "location": "File > Import-Export > CSV PointCloud (.csv) ",
   "description": "Import CSV Point Cloud as single mesh.",
   "warning": "",
-  "wiki_url": ""
+  "wiki_url": "",
   "category": "Import-Export"
 }
 
 if "bpy" in locals():
     import imp
-    if "import_raw" in locals():
-        import.reload(import_raw)
+    if "readCSV" in locals():
+        imp.reload(readCSV)
 else:
     import bpy
 
