@@ -55,7 +55,7 @@ class PointCloud():
            it internally without error checking.
 
            If fname is None and self.fname is none, returns False
-           If fname is set, then assigns new filename to self.fname
+           If fname is set, then assigns new filepath to self.fname
         """
 
         if fname: self.fname=fname
@@ -64,7 +64,7 @@ class PointCloud():
         fid=open(self.fname,'r')
         self.header=fid.readline().split(',')
 
-        for line in self.lines:
+        for line in fid.readlines():
             self.points.append(line.split(','))
 
         fid.close()
@@ -79,14 +79,15 @@ class PointCloud():
         for object in scene.objects:
             object.select = False
 
-        mesh.update()
-        mesh.validate()
 
         mesh=bpy.data.meshes.new(objName)
         object = bpy.data.objects.new(objName, mesh)
         scene.objects.link(object)
         object.select = True
 
+        #mesh.update()
+        #mesh.validate()
+        #
         if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
             scene.objects.active = object
 
@@ -94,19 +95,20 @@ class PointCloud():
 
         oldLen=0
         for p in self.points:
-            x=p(0)
-            y=p(1)
-            z=p(2)
-            n=p(3)  # for now, column 'n' is 'Col'.  This will change in the future
+            x=float(p[0])
+            y=float(p[1])
+            z=float(p[2])
+            n=float(p[3])
+            # for now, column 'n' is 'Col'.  This will change in the future
 
+            xyz=(x,y,z)
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=p)
-            #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=p)
-            #bpy.ops.mesh.primitive_cube_add(location=p,radius=0.07)
+            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=xyz)
+            #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=xyz)
+            #bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
             bpy.ops.object.mode_set()
             nn = rangeSet(n, 0.0, 1.0)
             newLen=len(Col.data)
-            print(oldLen,newLen)
             for i in range(oldLen,newLen):
                 mesh.vertex_colors['Col'].data[i].color[0]=nn
                 mesh.vertex_colors['Col'].data[i].color[1]=nn
@@ -128,8 +130,8 @@ class PointCloud():
 
 
 
-def read(filepath):
+def read(directory,filepath):
     objName = bpy.path.display_name_from_filepath(filepath)
-    pc=PointCloud(filename)
+    pc=PointCloud(filepath)
     pc.loadPoints()  # TODO: Add some error checking
     object,mesh=pc.createMesh(objName)

@@ -36,8 +36,12 @@ else:
     import bpy
 
 from bpy.props import StringProperty, BoolProperty
+from bpy_extras.io_utils import (ImportHelper,
+                                 ExportHelper,
+                                 axis_conversion,
+                                 )
 
-class CsvImporter(bpy.types.Operator):
+class CsvImporter(bpy.types.Operator, ImportHelper):
     """Load CSV Point Cloud"""
     bl_idname  = "import_mesh.csv"
     bl_label   = "Import CSV"
@@ -45,11 +49,17 @@ class CsvImporter(bpy.types.Operator):
 
     filepath = StringProperty(subtype='FILE_PATH', )
     filter_glob = StringProperty(default="*.csv", options={'HIDDEN'})
+    directory = StringProperty(subtype='DIR_PATH', )
 
     def execute(self, context):
         from . import readCSV
-        readCSV.read(self.filepath)
+        readCSV.read(self.directory,self.filepath)
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        wm.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 def menu_import(self, context):
     self.layout.operator(CsvImporter.bl_idname, text="CSV Files (.csv)")
