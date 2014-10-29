@@ -47,6 +47,7 @@ class PointCloud():
         self.fname=fname
         self.header=[]
         self.points=[]
+        self.headCols={}
 
     def loadPoints(self,fname=None):
         """loadPoints(fname=None)
@@ -60,9 +61,10 @@ class PointCloud():
 
         if fname: self.fname=fname
         if not self.fname: return False
+        self.headCols={}
 
         fid=open(self.fname,'r')
-        self.header=fid.readline().split(',')
+        self.header=[v.strip() for v in fid.readline().split(',')]
 
         for line in fid.readlines():
             self.points.append(line.split(','))
@@ -85,37 +87,37 @@ class PointCloud():
         scene.objects.link(object)
         object.select = True
 
-        #mesh.update()
-        #mesh.validate()
-        #
         if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
             scene.objects.active = object
 
-        Col=mesh.vertex_colors.new()
-
-        oldLen=0
+        bpy.ops.object.mode_set(mode='EDIT')
         for p in self.points:
             x=float(p[0])
             y=float(p[1])
             z=float(p[2])
-            n=float(p[3])
-            # for now, column 'n' is 'Col'.  This will change in the future
 
             xyz=(x,y,z)
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=xyz)
+            #bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=xyz)
             #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=xyz)
-            #bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
-            bpy.ops.object.mode_set()
-            nn = rangeSet(n, 0.0, 1.0)
-            newLen=len(Col.data)
-            for i in range(oldLen,newLen):
-                mesh.vertex_colors['Col'].data[i].color[0]=nn
-                mesh.vertex_colors['Col'].data[i].color[1]=nn
-                mesh.vertex_colors['Col'].data[i].color[2]=nn
-        
-            oldLen=newLen
+            bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
+        bpy.ops.object.mode_set()
+        #
+        mesh.update()
+        mesh.validate()
 
+        for col,h in enumerate(self.header):
+            self.headCols[h]=(col,mesh.vertex_colors.new(h))
+
+        #for i in range(len(vertCount)):
+        #    for k in self.headCols:
+        #        col,h = self.headCols[k]
+        #        print(dir(h.data))
+        #        print(dir(h.data.keys()))
+        #        nn=float(p[col])
+        #        d=h.data[i]
+        #        d.color[0]=nn
+        #        d.color[1]=nn
+        #        d.color[2]=nn
 
         return (object,mesh)
             
