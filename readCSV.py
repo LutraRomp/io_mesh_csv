@@ -19,28 +19,6 @@
 import bpy
 import os
 
-def clipper(val,minVal=0.0, maxVal=1.0):
-    """clipper(val, minVal=0.0, maxVal=1.0
-       Clips 'val' between minVal and maxVal.
-    """
-    return min(maxVal, max(minVal, val))
-
-def ranger(val, minVal=0.0, maxVal=1.0):
-    """ranger(val, minVal=0.0, maxVal=1.0)
-       Shifts and scales val such that any number between minVal and maxVal
-       will be between 0.0 and 1.0 respectively.  Does not clip.
-
-       Uses the equation: (val - minVal) / (maxVal - minVal)
-    """
-    return (val-minVal)/(maxVal-minVal)
-
-def rangeSet(val, minVal=0.0, maxVal=1.0):
-    """rangeSet(val, minVal=0.0, maxVal=1.0)
-       Scales val using ranger with minVal and maxVal as inputs, then
-       clips all values below 0.0 or above 1.0 using clip.
-    """
-    ranged=ranger(val, minVal, maxVal)
-    return clipper(ranged)
 
 class PointCloud():
     def __init__(self,fname):
@@ -67,7 +45,7 @@ class PointCloud():
         self.header=[v.strip() for v in fid.readline().split(',')]
 
         for line in fid.readlines():
-            self.points.append(line.split(','))
+            self.points.append([float(v.strip()) for v in line.split(',')])
 
         fid.close()
 
@@ -92,9 +70,9 @@ class PointCloud():
 
         bpy.ops.object.mode_set(mode='EDIT')
         for p in self.points:
-            x=float(p[0])
-            y=float(p[1])
-            z=float(p[2])
+            x=p[0]
+            y=p[1]
+            z=p[2]
 
             xyz=(x,y,z)
             #bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=xyz)
@@ -103,21 +81,21 @@ class PointCloud():
         bpy.ops.object.mode_set()
         #
         mesh.update()
-        mesh.validate()
 
         for col,h in enumerate(self.header):
-            self.headCols[h]=(col,mesh.vertex_colors.new(h))
-
-        #for i in range(len(vertCount)):
-        #    for k in self.headCols:
-        #        col,h = self.headCols[k]
-        #        print(dir(h.data))
-        #        print(dir(h.data.keys()))
-        #        nn=float(p[col])
-        #        d=h.data[i]
-        #        d.color[0]=nn
-        #        d.color[1]=nn
-        #        d.color[2]=nn
+            mesh.vertex_colors.new(h)
+            self.headCols[h]=col
+            
+        numItems=len(self.points)
+        for key in mesh.vertex_colors.keys():
+            numVertsPerItem=int(len(mesh.vertex_colors[key].data)/numItems)
+            for i in range(numItems):
+                n=self.points[i][self.headCols[key]]
+                for j in range(numVertsPerItem):
+                    data=mesh.vertex_colors[key].data[j+i*numVertsPerItem]
+                    data.color[0]=n
+                    data.color[1]=n
+                    data.color[2]=n
 
         return (object,mesh)
             

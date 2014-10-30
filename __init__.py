@@ -19,7 +19,7 @@
 bl_info = {
   "name": "CSV PointCloud reader (.csv)",
   "author": "David Ortley (lutra)",
-  "version": (0, 1),
+  "version": (0, 2),
   "blender": (2, 67, 0),
   "location": "File > Import-Export > CSV PointCloud (.csv) ",
   "description": "Import CSV Point Cloud as single mesh.",
