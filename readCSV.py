@@ -39,15 +39,24 @@ class PointCloud():
 
         if fname: self.fname=fname
         if not self.fname: return False
-        self.headCols={}
 
         fid=open(self.fname,'r')
         self.header=[v.strip() for v in fid.readline().split(',')]
 
+        self.headCols={}
+        for col,h in enumerate(self.header):
+            self.headCols[h]=col
+
+        self.points=[]
         for line in fid.readlines():
             self.points.append([float(v.strip()) for v in line.split(',')])
 
         fid.close()
+
+
+class MeshGenerator():
+    def __init__(self,pointCloud):
+        self.pointCloud=pointCloud
 
     def createMesh(self,objName):
         """createMesh()
@@ -55,63 +64,67 @@ class PointCloud():
            and generates the mesh from the first three columns.
         """
 
-        scene = bpy.context.scene
-        for object in scene.objects:
+        self.scene = bpy.context.scene
+        for object in self.scene.objects:
             object.select = False
 
+        self.mesh=bpy.data.meshes.new(objName)
+        self.object = bpy.data.objects.new(objName, self.mesh)
+        self.scene.objects.link(self.object)
+        self.object.select = True
 
-        mesh=bpy.data.meshes.new(objName)
-        object = bpy.data.objects.new(objName, mesh)
-        scene.objects.link(object)
-        object.select = True
+        for h in self.pointCloud.header:
+            self.mesh.vertex_colors.new(h)
 
-        if scene.objects.active is None or scene.objects.active.mode == 'OBJECT':
-            scene.objects.active = object
+        if self.scene.objects.active is None or self.scene.objects.active.mode == 'OBJECT':
+            self.scene.objects.active = self.object
+
+    def populateMesh(self):
+        for object in self.scene.objects:
+            object.select = False
+        self.object.select = True
+        self.scene.objects.active = self.object
 
         bpy.ops.object.mode_set(mode='EDIT')
-        for p in self.points:
-            x=p[0]
-            y=p[1]
-            z=p[2]
 
-            xyz=(x,y,z)
+        for p in self.pointCloud.points:
+            xyz=(p[0],p[1],p[2])
             #bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.07,location=xyz)
             #bpy.ops.mesh.primitive_ico_sphere_add(size=0.07,location=xyz)
             bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
-        bpy.ops.object.mode_set()
-        #
-        mesh.update()
 
-        for col,h in enumerate(self.header):
-            mesh.vertex_colors.new(h)
-            self.headCols[h]=col
-            
-        numItems=len(self.points)
-        for key in mesh.vertex_colors.keys():
-            numVertsPerItem=int(len(mesh.vertex_colors[key].data)/numItems)
+        bpy.ops.object.mode_set()
+        self.mesh.update()
+
+        numItems=len(self.pointCloud.points)
+        for key in self.mesh.vertex_colors.keys():
+            numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
             for i in range(numItems):
-                n=self.points[i][self.headCols[key]]
+                n=self.pointCloud.points[i][self.pointCloud.headCols[key]]
                 for j in range(numVertsPerItem):
-                    data=mesh.vertex_colors[key].data[j+i*numVertsPerItem]
+                    data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
                     data.color[0]=n
                     data.color[1]=n
                     data.color[2]=n
 
-        return (object,mesh)
-            
+    def destroyMesh(self):
+        for object in self.scene.objects:
+            object.select = False
+        self.object.select = True
+        self.scene.objects.active = self.object
 
-    def destroyMesh(self,n):
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='TOGGLE')
         bpy.ops.mesh.delete(type='VERT')
         bpy.ops.object.mode_set()
 
 
-
-
-
 def read(directory,filepath):
     objName = bpy.path.display_name_from_filepath(filepath)
-    pc=PointCloud(filepath)
-    pc.loadPoints()  # TODO: Add some error checking
-    object,mesh=pc.createMesh(objName)
+
+    pCloud=PointCloud(filepath)
+    pCloud.loadPoints()
+
+    meshGen=MeshGenerator(pCloud)
+    meshGen.createMesh(objName)
+    meshGen.populateMesh()
