@@ -154,19 +154,19 @@ class MeshGenerator():
                 xyz=(p[0],p[1],p[2])
                 if type == 'cubes':
                     bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
-                elif type == 'icosphere1':
+                elif type == 'icospheres1':
                     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.03,location=xyz)
-                elif type == 'icosphere2':
+                elif type == 'icospheres2':
                     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,size=0.03,location=xyz)
 
             bpy.ops.object.mode_set()
             self.mesh.update()
 
-            numItems=len(self.pointCloud.points)
+            numItems=len(self.pointCloud.data)
             for key in self.mesh.vertex_colors.keys():
                 numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
                 for i in range(numItems):
-                    n=self.pointCloud.points[i][self.pointCloud.headCols[key]]
+                    n=self.pointCloud.data[i][self.pointCloud.headCols[key]]
                     for j in range(numVertsPerItem):
                         data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
                         data.color[0]=n
@@ -197,4 +197,4 @@ def read(directory,filepath):
 
     meshGen=MeshGenerator(pCloud)
     meshGen.createMesh(objName)
-    meshGen.populateMesh('cubes')
+    meshGen.populateMesh()
