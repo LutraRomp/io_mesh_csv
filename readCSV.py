@@ -118,6 +118,7 @@ class PointCloud():
 class MeshGenerator():
     def __init__(self,pointCloud):
         self.pointCloud=pointCloud
+        self.objectTypes=['cubes','icospheres1','icospheres2']
 
     def createMesh(self,objName):
         """createMesh()
@@ -140,33 +141,40 @@ class MeshGenerator():
         if self.scene.objects.active is None or self.scene.objects.active.mode == 'OBJECT':
             self.scene.objects.active = self.object
 
-    def populateMesh(self):
+    def populateMesh(self,type='points'):
         for object in self.scene.objects:
             object.select = False
         self.object.select = True
         self.scene.objects.active = self.object
 
-        bpy.ops.object.mode_set(mode='EDIT')
+        if type in self.objectTypes:
+            bpy.ops.object.mode_set(mode='EDIT')
 
-        for p in self.pointCloud.points:
-            xyz=(p[0],p[1],p[2])
-            bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.03,location=xyz)
-            #bpy.ops.mesh.primitive_ico_sphere_add(size=0.03,location=xyz)
-            #bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
+            for p in self.pointCloud.points:
+                xyz=(p[0],p[1],p[2])
+                if type == 'cubes':
+                    bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
+                elif type == 'icosphere1':
+                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.03,location=xyz)
+                elif type == 'icosphere2':
+                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,size=0.03,location=xyz)
 
-        bpy.ops.object.mode_set()
-        self.mesh.update()
+            bpy.ops.object.mode_set()
+            self.mesh.update()
 
-        numItems=len(self.pointCloud.points)
-        for key in self.mesh.vertex_colors.keys():
-            numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
-            for i in range(numItems):
-                n=self.pointCloud.points[i][self.pointCloud.headCols[key]]
-                for j in range(numVertsPerItem):
-                    data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
-                    data.color[0]=n
-                    data.color[1]=n
-                    data.color[2]=n
+            numItems=len(self.pointCloud.points)
+            for key in self.mesh.vertex_colors.keys():
+                numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
+                for i in range(numItems):
+                    n=self.pointCloud.points[i][self.pointCloud.headCols[key]]
+                    for j in range(numVertsPerItem):
+                        data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
+                        data.color[0]=n
+                        data.color[1]=n
+                        data.color[2]=n
+        else:
+            self.mesh.from_pydata(self.pointCloud.points, [], [])
+            self.mesh.update()
 
     def destroyMesh(self):
         for object in self.scene.objects:
@@ -185,7 +193,8 @@ def read(directory,filepath):
 
     pCloud=PointCloud(filepath)
     pCloud.loadPoints()
+    pCloud.assignPoints(X='x',Y='y',Z='z')
 
     meshGen=MeshGenerator(pCloud)
     meshGen.createMesh(objName)
-    meshGen.populateMesh()
+    meshGen.populateMesh('cubes')
