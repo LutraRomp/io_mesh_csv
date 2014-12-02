@@ -35,7 +35,9 @@ if "bpy" in locals():
 else:
     import bpy
 
-from bpy.props import StringProperty, BoolProperty
+from bpy.props import (StringProperty,
+                       EnumProperty,
+                       )
 from bpy_extras.io_utils import (ImportHelper,
                                  ExportHelper,
                                  axis_conversion,
@@ -51,15 +53,41 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
     filter_glob = StringProperty(default="*.csv", options={'HIDDEN'})
     directory = StringProperty(subtype='DIR_PATH', )
 
+    X = StringProperty(name="X:",default="x")
+    Y = StringProperty(name="Y:",default="y")
+    Z = StringProperty(name="Z:",default="z")
+    T = EnumProperty(name="Point Type:",
+                     items=( ("points", "Points", "Pts"),
+                             ("cubes", "Cubes", "Cbs"),
+                             ("icospheres1", "Ico Spheres (subdiv 1)", "IcoSpheres (Subdivide 1)"),
+                             ("icospheres2", "Ico Spheres (subdiv 2)", "IcoSpheres (Subdivied 2)") )
+                     )
+
     def execute(self, context):
         from . import readCSV
-        readCSV.read(self.directory,self.filepath)
+        readCSV.read(self.directory,self.filepath,
+                     self.X, self.Y, self.Z, self.T)
         return {'FINISHED'}
 
     def invoke(self, context, event):
         wm = context.window_manager
         wm.fileselect_add(self)
         return {'RUNNING_MODAL'}
+
+    def draw(self, context):
+        engine=context.scene.render.engine
+        layout=self.layout
+
+        box=layout.box()
+        box.label("Column Header Names")
+        box.prop(self, "X")
+        box.prop(self, "Y")
+        box.prop(self, "Z")
+        box.label("Display Type ('points' are fastest)")
+        box.prop(self, "T")
+
+        row=box.row()
+        row.active = bpy.data.is_saved
 
 def menu_import(self, context):
     self.layout.operator(CsvImporter.bl_idname, text="CSV Files (.csv)")
