@@ -188,13 +188,13 @@ class MeshGenerator():
         bpy.ops.object.mode_set()
 
 
-def read(directory,filepath):
+def read(directory,filepath,X,Y,Z,T):
     objName = bpy.path.display_name_from_filepath(filepath)
 
     pCloud=PointCloud(filepath)
     pCloud.loadPoints()
-    pCloud.assignPoints(X='x',Y='y',Z='z')
+    pCloud.assignPoints(X,Y,Z)
 
     meshGen=MeshGenerator(pCloud)
     meshGen.createMesh(objName)
-    meshGen.populateMesh()
+    meshGen.populateMesh(type=T)
