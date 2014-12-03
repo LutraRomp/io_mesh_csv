@@ -37,6 +37,7 @@ else:
 
 from bpy.props import (StringProperty,
                        EnumProperty,
+                       FloatProperty,
                        )
 from bpy_extras.io_utils import (ImportHelper,
                                  ExportHelper,
@@ -62,11 +63,15 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
                              ("icospheres1", "Ico Spheres (subdiv 1)", "IcoSpheres (Subdivide 1)"),
                              ("icospheres2", "Ico Spheres (subdiv 2)", "IcoSpheres (Subdivied 2)") )
                      )
+    DELIM = StringProperty(name="Delimiter:",default=",")
+    SCALE = FloatProperty(name="Scale:",default=1.0)
 
     def execute(self, context):
         from . import readCSV
+        print("..%s.." % self.DELIM)
         readCSV.read(self.directory,self.filepath,
-                     self.X, self.Y, self.Z, self.T)
+                     self.X, self.Y, self.Z, self.T,
+                     self.DELIM,self.SCALE)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -83,11 +88,15 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
         box.prop(self, "X")
         box.prop(self, "Y")
         box.prop(self, "Z")
+
+        box=layout.box()
+        box.prop(self, "DELIM")
+        box.prop(self, "SCALE")
+
+        box=layout.box()
         box.label("Display Type ('points' are fastest)")
         box.prop(self, "T")
 
-        row=box.row()
-        row.active = bpy.data.is_saved
 
 def menu_import(self, context):
     self.layout.operator(CsvImporter.bl_idname, text="CSV Files (.csv)")
