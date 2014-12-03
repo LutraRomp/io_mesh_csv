@@ -31,7 +31,7 @@ class PointCloud():
         self.Y=None
         self.Z=None
 
-    def loadPoints(self,fname=None):
+    def loadPoints(self,fname=None, delim=','):
         """loadPoints(fname=None)
            This is very dumb at the moment.  It simply reads the
            file from disk assuming its a proper .csv file and stores
@@ -45,7 +45,7 @@ class PointCloud():
         if not self.fname: return False
 
         fid=open(self.fname,'r')
-        self.header=[v.strip() for v in fid.readline().split(',')]
+        self.header=[v.strip() for v in fid.readline().split(delim)]
 
         self.headCols={}
         for col,h in enumerate(self.header):
@@ -53,7 +53,7 @@ class PointCloud():
 
         self.data=[]
         for line in fid.readlines():
-            self.data.append([float(v.strip()) for v in line.split(',')])
+            self.data.append([float(v.strip()) for v in line.split(delim)])
 
         fid.close()
 
@@ -141,7 +141,7 @@ class MeshGenerator():
         if self.scene.objects.active is None or self.scene.objects.active.mode == 'OBJECT':
             self.scene.objects.active = self.object
 
-    def populateMesh(self,type='points'):
+    def populateMesh(self,type='points',scale=1.0):
         for object in self.scene.objects:
             object.select = False
         self.object.select = True
@@ -153,11 +153,11 @@ class MeshGenerator():
             for p in self.pointCloud.points:
                 xyz=(p[0],p[1],p[2])
                 if type == 'cubes':
-                    bpy.ops.mesh.primitive_cube_add(location=xyz,radius=0.07)
+                    bpy.ops.mesh.primitive_cube_add(location=xyz,radius=scale)
                 elif type == 'icospheres1':
-                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=0.03,location=xyz)
+                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1,size=scale,location=xyz)
                 elif type == 'icospheres2':
-                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,size=0.03,location=xyz)
+                    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,size=scale,location=xyz)
 
             bpy.ops.object.mode_set()
             self.mesh.update()
@@ -188,13 +188,13 @@ class MeshGenerator():
         bpy.ops.object.mode_set()
 
 
-def read(directory,filepath,X,Y,Z,T):
+def read(directory,filepath,X,Y,Z,T,DELIM,SCALE):
     objName = bpy.path.display_name_from_filepath(filepath)
 
     pCloud=PointCloud(filepath)
-    pCloud.loadPoints()
+    pCloud.loadPoints(delim=DELIM)
     pCloud.assignPoints(X,Y,Z)
 
     meshGen=MeshGenerator(pCloud)
     meshGen.createMesh(objName)
-    meshGen.populateMesh(type=T)
+    meshGen.populateMesh(type=T,scale=SCALE)

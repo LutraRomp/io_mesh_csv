@@ -19,7 +19,7 @@
 bl_info = {
   "name": "CSV PointCloud reader (.csv)",
   "author": "David Ortley (lutra)",
-  "version": (0, 4, 0),
+  "version": (0, 4, 1),
   "blender": (2, 67, 0),
   "location": "File > Import-Export > CSV PointCloud (.csv) ",
   "description": "Import CSV Point Cloud as single mesh.",
@@ -37,6 +37,7 @@ else:
 
 from bpy.props import (StringProperty,
                        EnumProperty,
+                       FloatProperty,
                        )
 from bpy_extras.io_utils import (ImportHelper,
                                  ExportHelper,
@@ -62,11 +63,14 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
                              ("icospheres1", "Ico Spheres (subdiv 1)", "IcoSpheres (Subdivide 1)"),
                              ("icospheres2", "Ico Spheres (subdiv 2)", "IcoSpheres (Subdivied 2)") )
                      )
+    DELIM = StringProperty(name="Delimiter:",default=",")
+    SCALE = FloatProperty(name="Scale:",default=1.0,min=0.00001,max=1000.0)
 
     def execute(self, context):
         from . import readCSV
         readCSV.read(self.directory,self.filepath,
-                     self.X, self.Y, self.Z, self.T)
+                     self.X, self.Y, self.Z, self.T,
+                     self.DELIM,self.SCALE)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -83,11 +87,15 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
         box.prop(self, "X")
         box.prop(self, "Y")
         box.prop(self, "Z")
+
+        box=layout.box()
+        box.prop(self, "DELIM")
+        box.prop(self, "SCALE")
+
+        box=layout.box()
         box.label("Display Type ('points' are fastest)")
         box.prop(self, "T")
 
-        row=box.row()
-        row.active = bpy.data.is_saved
 
 def menu_import(self, context):
     self.layout.operator(CsvImporter.bl_idname, text="CSV Files (.csv)")
