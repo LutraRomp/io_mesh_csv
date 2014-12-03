@@ -19,7 +19,7 @@
 bl_info = {
   "name": "CSV PointCloud reader (.csv)",
   "author": "David Ortley (lutra)",
-  "version": (0, 4, 0),
+  "version": (0, 4, 1),
   "blender": (2, 67, 0),
   "location": "File > Import-Export > CSV PointCloud (.csv) ",
   "description": "Import CSV Point Cloud as single mesh.",
@@ -64,11 +64,10 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
                              ("icospheres2", "Ico Spheres (subdiv 2)", "IcoSpheres (Subdivied 2)") )
                      )
     DELIM = StringProperty(name="Delimiter:",default=",")
-    SCALE = FloatProperty(name="Scale:",default=1.0)
+    SCALE = FloatProperty(name="Scale:",default=1.0,min=0.00001,max=1000.0)
 
     def execute(self, context):
         from . import readCSV
-        print("..%s.." % self.DELIM)
         readCSV.read(self.directory,self.filepath,
                      self.X, self.Y, self.Z, self.T,
                      self.DELIM,self.SCALE)
