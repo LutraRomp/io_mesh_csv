@@ -90,11 +90,11 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
 
         box=layout.box()
         box.prop(self, "DELIM")
-        box.prop(self, "SCALE")
 
         box=layout.box()
         box.label("Display Type ('points' are fastest)")
         box.prop(self, "T")
+        box.prop(self, "SCALE")
 
 
 def menu_import(self, context):
