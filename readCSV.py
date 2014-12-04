@@ -135,8 +135,6 @@ class MeshGenerator():
         self.scene.objects.link(self.object)
         self.object.select = True
 
-        for h in self.pointCloud.header:
-            self.mesh.vertex_colors.new(h)
 
         if self.scene.objects.active is None or self.scene.objects.active.mode == 'OBJECT':
             self.scene.objects.active = self.object
@@ -162,19 +160,23 @@ class MeshGenerator():
             bpy.ops.object.mode_set()
             self.mesh.update()
 
-            numItems=len(self.pointCloud.data)
-            for key in self.mesh.vertex_colors.keys():
-                numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
-                for i in range(numItems):
-                    n=self.pointCloud.data[i][self.pointCloud.headCols[key]]
-                    for j in range(numVertsPerItem):
-                        data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
-                        data.color[0]=n
-                        data.color[1]=n
-                        data.color[2]=n
         else:
             self.mesh.from_pydata(self.pointCloud.points, [], [])
             self.mesh.update()
+
+        for h in self.pointCloud.header:
+            self.mesh.vertex_colors.new(h)
+
+        numItems=len(self.pointCloud.data)
+        for key in self.mesh.vertex_colors.keys():
+            numVertsPerItem=int(len(self.mesh.vertex_colors[key].data)/numItems)
+            for i in range(numItems):
+                n=self.pointCloud.data[i][self.pointCloud.headCols[key]]
+                for j in range(numVertsPerItem):
+                    data=self.mesh.vertex_colors[key].data[j+i*numVertsPerItem]
+                    data.color[0]=n
+                    data.color[1]=n
+                    data.color[2]=n
 
     def destroyMesh(self):
         for object in self.scene.objects:

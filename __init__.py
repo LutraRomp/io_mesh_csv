@@ -19,7 +19,7 @@
 bl_info = {
   "name": "CSV PointCloud reader (.csv)",
   "author": "David Ortley (lutra)",
-  "version": (0, 4, 1),
+  "version": (0, 4, 2),
   "blender": (2, 67, 0),
   "location": "File > Import-Export > CSV PointCloud (.csv) ",
   "description": "Import CSV Point Cloud as single mesh.",
@@ -90,11 +90,11 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
 
         box=layout.box()
         box.prop(self, "DELIM")
-        box.prop(self, "SCALE")
 
         box=layout.box()
         box.label("Display Type ('points' are fastest)")
         box.prop(self, "T")
+        box.prop(self, "SCALE")
 
 
 def menu_import(self, context):
