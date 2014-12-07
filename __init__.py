@@ -54,17 +54,17 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
     filter_glob = StringProperty(default="*.csv", options={'HIDDEN'})
     directory = StringProperty(subtype='DIR_PATH', )
 
-    X = StringProperty(name="X:",default="x")
-    Y = StringProperty(name="Y:",default="y")
-    Z = StringProperty(name="Z:",default="z")
-    T = EnumProperty(name="Point Type:",
+    X = StringProperty(name="X",default="x")
+    Y = StringProperty(name="Y",default="y")
+    Z = StringProperty(name="Z",default="z")
+    T = EnumProperty(name="Point Type",
                      items=( ("points", "Points", "Pts"),
                              ("cubes", "Cubes", "Cbs"),
                              ("icospheres1", "Ico Spheres (subdiv 1)", "IcoSpheres (Subdivide 1)"),
                              ("icospheres2", "Ico Spheres (subdiv 2)", "IcoSpheres (Subdivied 2)") )
                      )
-    DELIM = StringProperty(name="Delimiter:",default=",")
-    SCALE = FloatProperty(name="Scale:",default=1.0,min=0.00001,max=1000.0)
+    DELIM = StringProperty(name="Delimiter",default=",")
+    SCALE = FloatProperty(name="Scale",default=1.0,min=0.00001,max=1000.0)
 
     def execute(self, context):
         from . import readCSV
