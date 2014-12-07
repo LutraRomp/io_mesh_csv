@@ -70,7 +70,8 @@ class CsvImporter(bpy.types.Operator, ImportHelper):
         from . import readCSV
         readCSV.read(self.directory,self.filepath,
                      self.X, self.Y, self.Z, self.T,
-                     self.DELIM,self.SCALE)
+                     "%s" % (self.DELIM,),
+                     self.SCALE)
         return {'FINISHED'}
 
     def invoke(self, context, event):
